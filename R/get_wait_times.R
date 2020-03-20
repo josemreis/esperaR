@@ -37,6 +37,14 @@ get_wait_times <- function(hospital_id = NULL,
                            request_headers = NULL,
                            data_type = c("emergency", "consultation", "surgery")){
 
+  ## Prep the hospital id
+  # hospital_id is required
+  tryCatch(stopifnot(is_empty(hospital_id) == FALSE, is.na(hospital_id) == FALSE, grepl(pattern = "^(\\s+)?[0-9]+(\\s+)?$", x = as.character(hospital_id)))
+           ,error=stop("Hospital ID is missing\n> To retrieve the hospital IDs, make an API call using this function and this endpoint 'api.php/institution'"))
+
+  ## coerce to integer
+  hospital_id <- as.integer(hospital_id)
+
   ### must select a data type
   if (!data_type %in% c("emergency", "consultation", "surgery")){
 
@@ -58,13 +66,12 @@ get_wait_times <- function(hospital_id = NULL,
 
   }
 
-
   #### Prepare the endpoint
   endpoint <- case_when(
     data_type == "emergency" ~ "api.php/standbyTime",
     data_type == "consultation" ~ "api.php/standbyTimeCTH",
-    data_type == "surgery" ~ "api.php/standbyTimeSIGLIC",
-  ) %>%
+    data_type == "surgery" ~ "api.php/standbyTimeSIGLIC"
+    ) %>%
     paste(., hospital_id, sep = "/")
 
 
