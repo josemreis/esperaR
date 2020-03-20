@@ -39,8 +39,10 @@ get_wait_times <- function(hospital_id = NULL,
 
   ## Prep the hospital id
   # hospital_id is required
-  tryCatch(stopifnot(is_empty(hospital_id) == FALSE, is.na(hospital_id) == FALSE, grepl(pattern = "^(\\s+)?[0-9]+(\\s+)?$", x = as.character(hospital_id)))
-           ,error=stop("Hospital ID is missing\n> To retrieve the hospital IDs, make an API call using this function and this endpoint 'api.php/institution'"))
+  tryCatch(
+    stopifnot(is_empty(hospital_id) == FALSE, is.na(hospital_id) == FALSE, grepl(pattern = "^(\\s+)?[0-9]+(\\s+)?$", x = as.character(hospital_id))),
+    error=stop("Hospital ID is missing\n> To retrieve the hospital IDs, make an API call using this function and this endpoint 'api.php/institution'")
+    )
 
   ## coerce to integer
   hospital_id <- as.integer(hospital_id)

@@ -1,9 +1,9 @@
 Package: esperaR
 Type: Package
-Title: What the Package Does (Title Case)
+Title: An unoficial wraper to Portugal's Ministry of Health "Tempos Medios de Espera" API for collecting hospital wait time data as well as hospital metadata
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Author: José M. Reis
+Maintainer: José M. Reis <jose.reis@ile-hamburg.de>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: What license is it under?
