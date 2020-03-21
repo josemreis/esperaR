@@ -35,11 +35,8 @@ get_wait_times <- function(hospital_id = NULL,
                            request_headers = NULL,
                            data_type = c("emergency", "consultation", "surgery")) {
 
-  ## Prep the hospital_id
-  check_id(hospital_id = hospital_id)
-
-  # coerce to integer
-  hospital_id <- as.integer(hospital_id)
+  ## Prep the hospital_id -> coerces it to integer
+  hospital_id <- prep_id(hospital_id = hospital_id)
 
   # check data type
   check_data_type(data_type = data_type)
@@ -217,10 +214,14 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
   # check output format
   check_output_format(output_format = output_format)
 
-  ## be nice message
-  if (sleep_time %in% c(NULL, NA, 0, "")){
+  ## Check sleep time
+  to_sleep <- prep_sleep_time(sleep_time = sleep_time)
 
-    warning("I have seen you have added no sleep time.\nWhile there are no stated rate limits, from my experience, this might lead to some server refusals.\n Strongly recommend adding some sleep_time")
+  # be nice
+  if (to_sleep == 0) {
+
+    base::message("\nI have seen you have added no sleep time.\nWhile there are no stated rate limits, this might lead to some server refusals as well as overload the server with requests.\nStrongly recommend adding some sleep_time.\n")
+    Sys.sleep(0.5)
 
   }
 
@@ -251,7 +252,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
     prog$tick()$print()
 
     ret <- try(get_wait_times(hospital_id = cur_id,
-                              output_format = "data_frame",
+                              output_format = output_format,
                               request_headers = "",
                               data_type = data_type), silent = TRUE)
 
@@ -260,10 +261,10 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
       ret <- NULL
     }
 
-    Sys.sleep(sleep_time)
+    Sys.sleep(to_sleep)
 
     return(ret)
-  }), otherwise = NULL, quiet = FALSE)
+  }, otherwise = NULL, quiet = FALSE))
 
   ## final tidying
   if (output_format == "data_frame") {
