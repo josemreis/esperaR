@@ -220,7 +220,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
   ## be nice message
   if (sleep_time %in% c(NULL, NA, 0, "")){
 
-    warning("I have seen you have added no sleep time.\nWhile there are no stated rate limits, this might lead to some server refusals.\n Strongly recommend adding some sleep_time")
+    warning("I have seen you have added no sleep time.\nWhile there are no stated rate limits, from my experience, this might lead to some server refusals.\n Strongly recommend adding some sleep_time")
 
   }
 
@@ -274,6 +274,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
       as_tibble()
 
   } else {
+
     ## as list
     to_return <- output_list
 
