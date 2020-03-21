@@ -4,9 +4,7 @@
 \alias{get_wait_times}
 \title{Get wait times for emergencies, consultations, and surgeries in the Hospitals covered by the "tempos" API}
 \usage{
-get_wait_times(hospital_id = NULL, output_format = c("json",
-  "data_frame"), request_headers = NULL, data_type = c("emergency",
-  "consultation", "surgery"))
+get_wait_times(...)
 }
 \arguments{
 \item{hospital_id}{Integer containing the hospital id, get it through \code{\link{get_hospital_metadata}} under the collumn \code{id}}
@@ -32,18 +30,15 @@ library(esperaR)
 
 \dontrun{
 library(ggplot2)
-## get the metadata for extracting the ids
-metadata <- get_hospital_metadata(output_format = "data_frame") \%>\%
- sample_n(., 1)
-
-## extract emergency data
-wait_dta <- get_wait_times(hospital_id = metadata$id,
+## extract emergency data as a data frame
+wait_dta <- get_wait_times(hospital_id = 333,
                           output_format = "data_frame",
-                          request_headers = c(from = "fooh@baah.pt"),
+                          request_headers = NULL
                           data_type = "emergency")
 
 wait_dta \%>\%
  ggplot(aes(triage_type, wait_time_secs)) +
  geom_boxplot()
 }
+
 }

@@ -24,12 +24,17 @@
 #'
 #'}
 
-
-
 get_hospital_metadata <- function(output_format = c("json", "data_frame"), request_headers = ""){
 
+  ## API call
+  # prep headers. Check if NULL, NA or not a named vector
+  if (is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
 
-  ### make the GET request
+    request_headers <- ""
+
+  }
+
+  # make the GET request
   resp <- RETRY(verb = "GET",
                 url = "http://tempos.min-saude.pt",
                 path = "api.php/institution",
@@ -40,29 +45,31 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
   # Check staus server response
   stop_for_status(resp)
 
-  ### Parse the data
-  if (!output_format %in% c("json", "data_frame")){
+  ## Parse the data
+  # check data format
+  check_output_format(output_format = output_format)
 
-    stop("please select one of the following formats:\n> \'json\', or\n> \'data_frame\'")
+  ## parse, wrangle, and turn to the selected format
+  if (output_format == "data_frame") {
 
-  } else if (output_format == "data_frame") {
-
-    ## parse the content
+    # parse the content as raw json
     content_raw <- content(resp, as = "text")
 
     # parse the json
     dta_raw <- try(jsonlite::fromJSON(content_raw, flatten = TRUE) %>%
                      .[["Result"]] %>%
                      set_names(.,
-                               gsub(pattern = "\\.", replacement = "\\_", x = names(.))), silent = TRUE)
+                               gsub(pattern = "\\.", replacement = "\\_", x = names(.))),
+                   silent = TRUE)
 
+    # parse the json to df and clean variable names
     if (class(dta_raw) == "try-error"){
 
       stop(paste0("Something went wrong when parsing the JSON file. Double check its format at: ", resp$url, "\nError message:\n", dta_raw))
 
     }
 
-    ## wrangle and return
+    ## wrangle
     to_return <- dta_raw %>%
       select(id = Id,
              hospital_name = Name,
@@ -81,7 +88,6 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
              hospital_url = InstitutionURL) %>%
       as_tibble()
 
-
   } else {
 
     ## as json
@@ -89,6 +95,6 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
 
   }
 
+  # return
   return(to_return)
-
 }

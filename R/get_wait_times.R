@@ -17,58 +17,49 @@
 #'
 #'\dontrun{
 #'library(ggplot2)
-#'## get the metadata for extracting the ids
-#'metadata <- get_hospital_metadata(output_format = "data_frame") %>%
-#'  sample_n(., 1)
-#'
-#'## extract emergency data
-#'wait_dta <- get_wait_times(hospital_id = metadata$id,
+#'## extract emergency data as a data frame
+#'wait_dta <- get_wait_times(hospital_id = 333,
 #'                           output_format = "data_frame",
-#'                           request_headers = c(from = "fooh@baah.pt"),
+#'                           request_headers = NULL
 #'                           data_type = "emergency")
 #'
 #'wait_dta %>%
 #'  ggplot(aes(triage_type, wait_time_secs)) +
 #'  geom_boxplot()
 #'}
+#'
 
-get_wait_times <- function(hospital_id = NULL,
-                           output_format = c("json", "data_frame"),
-                           request_headers = NULL,
-                           data_type = c("emergency", "consultation", "surgery")){
+#### Get wait times given a hospital id----------------------------------------
+get_wait_times <- possibly(function(hospital_id = NULL,
+                                    output_format = c("json", "data_frame"),
+                                    request_headers = NULL,
+                                    data_type = c("emergency", "consultation", "surgery")) {
 
-  ## Prep the hospital id
-  # hospital_id is required
-  tryCatch(
-    stopifnot(is_empty(hospital_id) == FALSE, is.na(hospital_id) == FALSE, grepl(pattern = "^(\\s+)?[0-9]+(\\s+)?$", x = as.character(hospital_id))),
-    error=stop("Hospital ID is missing\n> To retrieve the hospital IDs, make an API call using this function and this endpoint 'api.php/institution'")
-      )
+  ## Prep the hospital_id
+  check_id(hospital_id = hospital_id)
 
-  ## coerce to integer
+  # coerce to integer
   hospital_id <- as.integer(hospital_id)
 
-  ### must select a data type
-  if (!data_type %in% c("emergency", "consultation", "surgery")){
+  # check data type
+  check_data_type(data_type = data_type)
 
-    stop("Please select on of the three relevant data_types:\n(i) \"emergency\"\n(ii) \"consultations\" \n(iii)\"surgery\"" )
-
-
-  }
-
-  ### Check if the hospital shares data, if not throw an error
-  ## Get the metadata
+  ## Check if the hospital shares data, if not throw an error
+  # Get the metadata
   meta <- get_hospital_metadata(output_format = "data_frame")
 
-  ## extract the relevant variables
-  has_data <- pull(meta[meta$id == hospital_id, grepl(pattern = data_type, names(meta))])
+  # extract the relevant variables
+  has_data <- pull(meta[meta$id == hospital_id, grepl(pattern = data_type, x = names(meta))])
 
-  if (has_data == FALSE){
+  # check it it has data
+  if (has_data == FALSE) {
 
-    stop("At the moment, I cannot find the requested data type for this hospital.\nData is not available for all hospitals.\nIf you think that this may be a mistake, please file an issue at\nhttps://github.com/josemreis/espera_urgencias/issues")
+    stop("At the moment, I cannot find the requested data type for this hospital.\nData is not available for all hospitals.\nIf you think that this may be a mistake, please file an issue at\nhttps://github.com/josemreis/esperaR/issues")
 
   }
 
-  #### Prepare the endpoint
+  ## API call
+  # Prepare the endpoint
   endpoint <- case_when(
     data_type == "emergency" ~ "api.php/standbyTime",
     data_type == "consultation" ~ "api.php/standbyTimeCTH",
@@ -76,9 +67,14 @@ get_wait_times <- function(hospital_id = NULL,
     ) %>%
     paste(., hospital_id, sep = "/")
 
+  # prep headers. Check if NULL, NA or not a named vector
+  if (is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
 
-  #### Send the HTTP GET request
-  ### The request
+    request_headers <- ""
+
+  }
+
+  # Send the HTTP GET request
   resp <- RETRY(verb = "GET",
                 url = "http://tempos.min-saude.pt",
                 path = endpoint,
@@ -86,34 +82,33 @@ get_wait_times <- function(hospital_id = NULL,
                 pause_base = 20,
                 times = 5)
 
+  # check output format
+  check_output_format(output_format = output_format)
 
-  #### Parse the response
-  if (!output_format %in% c("json", "data_frame")){
+  ## Parse the response
+  if (output_format == "data_frame") {
 
-    stop("Please select one of the following formats:\n> \'json\', or\n> \'data_frame\'")
-
-  } else if (output_format == "data_frame") {
-
-    ## parse the content
+    # extract the content as raw json
     content_raw <- content(resp, as = "text")
 
-    # parse the json
+    # parse the json to df and clean variable names
     dta_raw <- try(jsonlite::fromJSON(content_raw, flatten = TRUE) %>%
                      .[["Result"]] %>%
                      set_names(.,
-                               gsub(pattern = "\\.", replacement = "\\_", names(.))), silent = TRUE)
-
-    if (class(dta_raw) == "try-error"){
+                               gsub(pattern = "\\.", replacement = "\\_", names(.))),
+                   silent = TRUE)
+    # Test it
+    if (class(dta_raw) == "try-error") {
 
       stop(paste0("Something went wrong when parsing the JSON file. Double check its format at: ", resp$url, "\nError message:\n", dta_raw))
 
     }
 
-    #### Wrangle
-    ### condition: data type
-    if (data_type == "emergency"){
+    ## Wrangle - different wrangling procedure depending on data_type requested
+    # logical condition: data type
+    if (data_type == "emergency") {
 
-      ## wide to long format
+      # wide to long format
       long_dta <- dta_raw %>% ## turn to wide format
         pivot_longer(.,
                      cols = matches("Time|Length"),
@@ -122,28 +117,29 @@ get_wait_times <- function(hospital_id = NULL,
         separate(.,
                  col = "triage_colour",
                  sep = "_",
-                 into = c("triage_colour", "metric_type")) %>% ## turn values into portuguese
+                 into = c("triage_colour", "metric_type")) %>%
         mutate(metric_type = case_when(
           metric_type == "Length" ~ "people_n",
           metric_type == "Time" ~ "wait_time_secs"
-        )) %>% # turn the time/people var into two
+        )) %>% # turn the time/people var into two different variables
         pivot_wider(.,
                     names_from = metric_type,
                     values_from = value_raw)
 
-      ## Parse dates
+      # Parse dates
       times_parsed <- long_dta %>%
-        mutate(hours = hour(seconds_to_period(wait_time_secs)),
-               minutes = minute(seconds_to_period(wait_time_secs)),
+        mutate(sec_p = seconds_to_period(wait_time_secs),
+               hours = hour(sec_p),
+               minutes = minute(sec_p),
                wait_time = case_when(
                  hours == 0 & minutes == 0  ~ paste0("00:00:", wait_time_secs),
                  hours == 0 & minutes > 0 ~ paste0("00:", minutes, ":00"),
                  hours > 0 ~ paste0(hours, ":", minutes, ":00")
                ),
                wait_time = hms(wait_time)) %>%
-        select(-c(hours, minutes))
+        select(-c(hours, minutes, -sec_p))
 
-      ## Add the last updated variable, remove some vars, and turn into final object
+      # Add the last updated variable, remove some vars, and turn into final object
       dta_cleaned <- times_parsed %>%
         mutate(last_update = ymd_hms(LastUpdate),
                triage_colour = case_when(
@@ -163,10 +159,9 @@ get_wait_times <- function(hospital_id = NULL,
                wait_time,
                people_n)
 
-
     } else if (data_type == "consultation") {
 
-      ## just renaming and dropping one var
+      # just renaming and dropping one var
       dta_cleaned <- dta_raw %>%
         mutate(id = hospital_id) %>%
         select(id,
@@ -192,7 +187,6 @@ get_wait_times <- function(hospital_id = NULL,
     to_return <- suppressMessages(left_join(dta_cleaned, meta)) %>%
       as_tibble()
 
-
   } else {
 
     ## as json
@@ -200,19 +194,17 @@ get_wait_times <- function(hospital_id = NULL,
 
   }
 
-
   return(to_return)
+}, otherwise = NULL, quiet = FALSE)
 
-}
-
-#### Function for getting all the wait times
+#### Function for getting all the wait times-------------------------------
 get_wait_times_all <- function(output_format = c("json", "data_frame"),
                                request_headers = "",
                                data_type = c("emergency", "consultation", "surgery"),
-                               sleep_time = 3){
+                               sleep_time = 3) {
 
-  ### must select a data type
-  if (!data_type %in% c("emergency", "consultation", "surgery")){
+  # must select a data type
+  if (!data_type %in% c("emergency", "consultation", "surgery")) {
 
     stop("Please select on of the three relevant data_types:\n(i) \"emergency\"\n(ii) \"consultations\" \n(iii)\"surgery\"" )
 
@@ -235,10 +227,12 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
       filter(shares_surgery_tems == TRUE)
 
   }
-  ## set up the progress bar
+
+  # set up the progress bar
   prog <- progress_estimated(n = nrow(hospital_metadata))
+
   ## loop across the hospitals which share data, extract, and join
-  to_return <- map(hospital_metadata$id, function(cur_id){
+  to_return <- map(hospital_metadata$id, function(cur_id) {
 
     prog$tick()$print()
 
@@ -247,7 +241,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
                               request_headers = "",
                               data_type = data_type), silent = TRUE)
 
-    if (class(ret) == "try-error"){
+    if (class(ret) == "try-error") {
 
       ret <- NULL
     }
@@ -260,5 +254,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
     as_tibble()
 
   return(to_return)
+
 }
 
+### END
