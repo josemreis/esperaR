@@ -30,10 +30,10 @@
 #'
 
 #### Get wait times given a hospital id----------------------------------------
-get_wait_times <- possibly(function(hospital_id = NULL,
-                                    output_format = c("json", "data_frame"),
-                                    request_headers = NULL,
-                                    data_type = c("emergency", "consultation", "surgery")) {
+get_wait_times <- function(hospital_id = NULL,
+                           output_format = c("json", "data_frame"),
+                           request_headers = NULL,
+                           data_type = c("emergency", "consultation", "surgery")) {
 
   ## Prep the hospital_id
   check_id(hospital_id = hospital_id)
@@ -48,15 +48,21 @@ get_wait_times <- possibly(function(hospital_id = NULL,
   # Get the metadata
   meta <- get_hospital_metadata(output_format = "data_frame")
 
-  # extract the relevant variables
-  has_data <- pull(meta[meta$id == hospital_id, grepl(pattern = data_type, x = names(meta))])
+  # get the data available
+  available <- hospital_data_availability(hospital_id = hospital_id,
+                                          hospital_metadata = meta)
 
-  # check it it has data
-  if (has_data == FALSE) {
+  if (available$availability[available$data_type == data_type] == FALSE) {
+    ## prep the error message
+    missing_msg <- paste0("It seems that '", data_type, "' data is not available for this Hospital.\n")
+    available_msg <- paste("However, the following data is:",
+                            paste(available$data_type[available$availability == TRUE], collapse = ", "),
+                            "\n")
+    issue_msg <- "If you have any reason to believe that the requested data exists in the API, please file an issue at\nhttps://github.com/josemreis/esperaR/issues\n"
 
-    stop("At the moment, I cannot find the requested data type for this hospital.\nData is not available for all hospitals.\nIf you think that this may be a mistake, please file an issue at\nhttps://github.com/josemreis/esperaR/issues")
-
+    stop(paste0(missing_msg, available_msg, issue_msg))
   }
+
 
   ## API call
   # Prepare the endpoint
@@ -195,18 +201,26 @@ get_wait_times <- possibly(function(hospital_id = NULL,
   }
 
   return(to_return)
-}, otherwise = NULL, quiet = FALSE)
+}
 
 #### Function for getting all the wait times-------------------------------
+
+### get_wait_times_all()
 get_wait_times_all <- function(output_format = c("json", "data_frame"),
                                request_headers = "",
                                data_type = c("emergency", "consultation", "surgery"),
                                sleep_time = 3) {
 
-  # must select a data type
-  if (!data_type %in% c("emergency", "consultation", "surgery")) {
+  # check data type
+  check_data_type(data_type = data_type)
 
-    stop("Please select on of the three relevant data_types:\n(i) \"emergency\"\n(ii) \"consultations\" \n(iii)\"surgery\"" )
+  # check output format
+  check_output_format(output_format = output_format)
+
+  ## be nice message
+  if (sleep_time %in% c(NULL, NA, 0, "")){
+
+    warning("I have seen you have added no sleep time.\nWhile there are no stated rate limits, this might lead to some server refusals.\n Strongly recommend adding some sleep_time")
 
   }
 
@@ -214,17 +228,17 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
   if (data_type == "emergency") {
 
     hospital_metadata <- get_hospital_metadata(output_format = "data_frame") %>%
-      filter(shares_emergency_tems == TRUE)
+      filter(shares_emergency_dta == TRUE)
 
   } else if (data_type == "consultation") {
 
     hospital_metadata <- get_hospital_metadata(output_format = "data_frame") %>%
-      filter(shares_consultation_tems == TRUE)
+      filter(shares_consultation_dta == TRUE)
 
   } else {
 
     hospital_metadata <- get_hospital_metadata(output_format = "data_frame") %>%
-      filter(shares_surgery_tems == TRUE)
+      filter(shares_surgery_dta == TRUE)
 
   }
 
@@ -232,7 +246,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
   prog <- progress_estimated(n = nrow(hospital_metadata))
 
   ## loop across the hospitals which share data, extract, and join
-  to_return <- map(hospital_metadata$id, function(cur_id) {
+  output_list <- map(hospital_metadata$id, possibly(function(cur_id) {
 
     prog$tick()$print()
 
@@ -249,9 +263,21 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
     Sys.sleep(sleep_time)
 
     return(ret)
-  }) %>%
-    bind_rows() %>%
-    as_tibble()
+  }), otherwise = NULL, quiet = FALSE)
+
+  ## final tidying
+  if (output_format == "data_frame") {
+
+    ## bind cols and turn to tibble
+    to_return <- output_list %>%
+      bind_rows() %>%
+      as_tibble()
+
+  } else {
+    ## as list
+    to_return <- output_list
+
+  }
 
   return(to_return)
 
