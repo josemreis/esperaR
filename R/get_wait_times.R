@@ -97,7 +97,7 @@ get_wait_times <- function(hospital_id = NULL,
     # parse the json to df and clean variable names
     dta_raw <- try(jsonlite::fromJSON(content_raw, flatten = TRUE) %>%
                      .[["Result"]] %>%
-                     set_names(.,
+                     purrr::set_names(.,
                                gsub(pattern = "\\.", replacement = "\\_", names(.))),
                    silent = TRUE)
     # Test it
@@ -113,7 +113,7 @@ get_wait_times <- function(hospital_id = NULL,
 
       # wide to long format
       long_dta <- dta_raw %>% ## turn to wide format
-        pivot_longer(.,
+        tidyr::pivot_longer(.,
                      cols = matches("Time|Length"),
                      names_to = "triage_colour",
                      values_to = "value_raw") %>% ## separate the triage from the metric type
@@ -125,7 +125,7 @@ get_wait_times <- function(hospital_id = NULL,
           metric_type == "Length" ~ "people_n",
           metric_type == "Time" ~ "wait_time_secs"
         )) %>% # turn the time/people var into two different variables
-        pivot_wider(.,
+        tidyr::pivot_wider(.,
                     names_from = metric_type,
                     values_from = value_raw)
 

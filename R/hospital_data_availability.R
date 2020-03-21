@@ -36,10 +36,12 @@ hospital_data_availability <- function(hospital_id = NULL, hospital_metadata = N
   to_return <- hospital_metadata %>%
     filter(id == hospital_id) %>%
     select(contains("shares")) %>%
-    set_names(.,
+    purrr::set_names(.,
               gsub(pattern = "shares|\\_|dta", replacement = "", x = names(.), fixed = FALSE)) %>%
-    pivot_longer(cols = c(1:3), names_to = "data_type", values_to = "availability") %>%
+    tidyr::pivot_longer(cols = c(1:3), names_to = "data_type", values_to = "availability") %>%
     mutate(id = hospital_id)
 
   return(to_return)
 }
+
+### END
