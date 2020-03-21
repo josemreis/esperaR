@@ -63,7 +63,7 @@ get_wait_times <- function(hospital_id = NULL,
 
   ## API call
   # Prepare the endpoint
-  endpoint <- case_when(
+  endpoint <- dplyr::case_when(
     data_type == "emergency" ~ "api.php/standbyTime",
     data_type == "consultation" ~ "api.php/standbyTimeCTH",
     data_type == "surgery" ~ "api.php/standbyTimeSIGLIC"
@@ -71,7 +71,7 @@ get_wait_times <- function(hospital_id = NULL,
     paste(., hospital_id, sep = "/")
 
   # prep headers. Check if NULL, NA or not a named vector
-  if (is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
+  if (rlang::is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
 
     request_headers <- ""
 
@@ -121,7 +121,7 @@ get_wait_times <- function(hospital_id = NULL,
                  col = "triage_colour",
                  sep = "_",
                  into = c("triage_colour", "metric_type")) %>%
-        mutate(metric_type = case_when(
+        mutate(metric_type = dplyr::case_when(
           metric_type == "Length" ~ "people_n",
           metric_type == "Time" ~ "wait_time_secs"
         )) %>% # turn the time/people var into two different variables
@@ -134,7 +134,7 @@ get_wait_times <- function(hospital_id = NULL,
         mutate(sec_p = seconds_to_period(wait_time_secs),
                hours = hour(sec_p),
                minutes = minute(sec_p),
-               wait_time = case_when(
+               wait_time = dplyr::case_when(
                  hours == 0 & minutes == 0  ~ paste0("00:00:", wait_time_secs),
                  hours == 0 & minutes > 0 ~ paste0("00:", minutes, ":00"),
                  hours > 0 ~ paste0(hours, ":", minutes, ":00")
@@ -145,7 +145,7 @@ get_wait_times <- function(hospital_id = NULL,
       # Add the last updated variable, remove some vars, and turn into final object
       dta_cleaned <- times_parsed %>%
         mutate(last_update = ymd_hms(LastUpdate),
-               triage_colour = case_when(
+               triage_colour = dplyr::case_when(
                  triage_colour == "Blue" ~ "Not urgent\n(blue)",
                  triage_colour == "Green" ~ "Less urgent\n(green)",
                  triage_colour == "Yellow" ~ "Urgent\n(yellow)",
@@ -244,10 +244,10 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
   }
 
   # set up the progress bar
-  prog <- progress_estimated(n = nrow(hospital_metadata))
+  prog <- dplyr::progress_estimated(n = nrow(hospital_metadata))
 
   ## loop across the hospitals which share data, extract, and join
-  output_list <- map(hospital_metadata$id, possibly(function(cur_id) {
+  output_list <- purrr::map(hospital_metadata$id, purrr::possibly(function(cur_id) {
 
     prog$tick()$print()
 

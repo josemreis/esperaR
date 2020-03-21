@@ -28,7 +28,7 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
 
   ## API call
   # prep headers. Check if NULL, NA or not a named vector
-  if (is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
+  if (rlang::rlang::is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
 
     request_headers <- ""
 

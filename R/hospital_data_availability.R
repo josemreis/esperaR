@@ -25,7 +25,7 @@ hospital_data_availability <- function(hospital_id = NULL, hospital_metadata = N
   hospital_id <- as.integer(hospital_id)
 
   # Get the metadata if not passed as argument
-  if (is_empty(hospital_metadata)) {
+  if (rlang::is_empty(hospital_metadata)) {
 
     hospital_metadata <- get_hospital_metadata(output_format = "data_frame",
                                                request_headers = "")
