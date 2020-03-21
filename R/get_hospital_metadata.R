@@ -35,7 +35,7 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
   }
 
   # make the GET request
-  resp <- RETRY(verb = "GET",
+  resp <- httr::RETRY(verb = "GET",
                 url = "http://tempos.min-saude.pt",
                 path = "api.php/institution",
                 config = add_headers(request_headers),
@@ -43,7 +43,7 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
                 times = 10)
 
   # Check staus server response
-  stop_for_status(resp)
+  httr::stop_for_status(resp)
 
   ## Parse the data
   # check data format
@@ -58,8 +58,8 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
     # parse the json
     dta_raw <- try(jsonlite::fromJSON(content_raw, flatten = TRUE) %>%
                      .[["Result"]] %>%
-                     set_names(.,
-                               gsub(pattern = "\\.", replacement = "\\_", x = names(.))),
+                     purrr::set_names(.,
+                                      gsub(pattern = "\\.", replacement = "\\_", x = names(.))),
                    silent = TRUE)
 
     # parse the json to df and clean variable names
@@ -98,3 +98,5 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
   # return
   return(to_return)
 }
+
+## END

@@ -78,12 +78,14 @@ get_wait_times <- function(hospital_id = NULL,
   }
 
   # Send the HTTP GET request
-  resp <- RETRY(verb = "GET",
-                url = "http://tempos.min-saude.pt",
-                path = endpoint,
-                config = add_headers(request_headers),
-                pause_base = 20,
-                times = 5)
+  resp <- httr::RETRY(verb = "GET",
+                      url = "http://tempos.min-saude.pt",
+                      path = endpoint,
+                      config = add_headers(request_headers),
+                      pause_base = 20,
+                      times = 5)
+
+  httr::stop_for_status(resp)
 
   # check output format
   check_output_format(output_format = output_format)
@@ -98,7 +100,7 @@ get_wait_times <- function(hospital_id = NULL,
     dta_raw <- try(jsonlite::fromJSON(content_raw, flatten = TRUE) %>%
                      .[["Result"]] %>%
                      purrr::set_names(.,
-                               gsub(pattern = "\\.", replacement = "\\_", names(.))),
+                                      gsub(pattern = "\\.", replacement = "\\_", names(.))),
                    silent = TRUE)
     # Test it
     if (class(dta_raw) == "try-error") {
@@ -131,15 +133,15 @@ get_wait_times <- function(hospital_id = NULL,
 
       # Parse dates
       times_parsed <- long_dta %>%
-        mutate(sec_p = seconds_to_period(wait_time_secs),
-               hours = hour(sec_p),
-               minutes = minute(sec_p),
+        mutate(sec_p = lubridate::seconds_to_period(wait_time_secs),
+               hours = lubridate::hour(sec_p),
+               minutes = lubridate::minute(sec_p),
                wait_time = dplyr::case_when(
                  hours == 0 & minutes == 0  ~ paste0("00:00:", wait_time_secs),
                  hours == 0 & minutes > 0 ~ paste0("00:", minutes, ":00"),
                  hours > 0 ~ paste0(hours, ":", minutes, ":00")
                ),
-               wait_time = hms(wait_time)) %>%
+               wait_time = lubridate::hms(wait_time)) %>%
         select(-c(hours, minutes, -sec_p))
 
       # Add the last updated variable, remove some vars, and turn into final object
@@ -255,11 +257,6 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
                               output_format = output_format,
                               request_headers = "",
                               data_type = data_type), silent = TRUE)
-
-    if (class(ret) == "try-error") {
-
-      ret <- NULL
-    }
 
     Sys.sleep(to_sleep)
 
