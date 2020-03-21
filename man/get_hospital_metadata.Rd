@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_hospital_metadata.R
 \name{get_hospital_metadata}
 \alias{get_hospital_metadata}
-\title{Get metadata on all hospitals covered by the API}
+\title{Get metadata on all hospitals covered by the "tempos" API}
 \usage{
 get_hospital_metadata(output_format = c("json", "data_frame"),
   request_headers = "")

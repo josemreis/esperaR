@@ -1,4 +1,4 @@
-#' Get wait times for emergencies, consultations, and surgeries in the Hospitals covered by the API
+#' Get wait times for emergencies, consultations, and surgeries in the Hospitals covered by the "tempos" API
 #'
 #' This function provides a wrapper to the API endpoints for getting the live wait times for emergencies, consultations, and surgeries at the following domain: [http://tempos.min-saude.pt]http://tempos.min-saude.pt.
 #' \code{\link{get_wait_times_all}} runs this function on all existing ids.
@@ -42,7 +42,7 @@ get_wait_times <- function(hospital_id = NULL,
   tryCatch(
     stopifnot(is_empty(hospital_id) == FALSE, is.na(hospital_id) == FALSE, grepl(pattern = "^(\\s+)?[0-9]+(\\s+)?$", x = as.character(hospital_id))),
     error=stop("Hospital ID is missing\n> To retrieve the hospital IDs, make an API call using this function and this endpoint 'api.php/institution'")
-    )
+      )
 
   ## coerce to integer
   hospital_id <- as.integer(hospital_id)

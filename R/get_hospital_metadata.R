@@ -1,4 +1,4 @@
-#' Get metadata on all hospitals covered by the API
+#' Get metadata on all hospitals covered by the "tempos" API
 #'
 #' This function provides a wrapper to the 'api.php/institution' endpoint from the following domain: http://tempos.min-saude.pt.
 #' Crucial for extracting the wait times, see \code{\link{get_wait_times}} has it contains the "hospital id"s as well as logical variables for the data available per website

@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_wait_times.R
 \name{get_wait_times}
 \alias{get_wait_times}
-\title{Get wait times for emergencies, consultations, and surgeries in the Hospitals covered by the API}
+\title{Get wait times for emergencies, consultations, and surgeries in the Hospitals covered by the "tempos" API}
 \usage{
 get_wait_times(hospital_id = NULL, output_format = c("json",
   "data_frame"), request_headers = NULL, data_type = c("emergency",

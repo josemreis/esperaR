@@ -1,6 +1,6 @@
 Package: esperaR
 Type: Package
-Title: An unoficial wraper to Portugal's Ministry of Health "Tempos Medios de Espera" API for collecting hospital wait time data as well as hospital metadata
+Title: An unoficial wraper to Portugal's Ministry of Health "tempos" API for collecting hospital wait time data as well as hospital metadata
 Version: 0.1.0
 Author: José M. Reis
 Maintainer: José M. Reis <jose.reis@ile-hamburg.de>
