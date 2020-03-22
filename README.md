@@ -17,7 +17,7 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 ## install dev version 
 remotes::install_github("josemreis/esperaR")
 
-## load rtweet package
+## load the package
 library(esperaR)
 ```
 
