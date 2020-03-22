@@ -1,7 +1,6 @@
 #' Check data availability for a Hospital covered by the "tempos" API
 #'
 #' This function takes a hospital id and returns the data availability in said hospital. Makes use of the hospital metadata, either by resorting to the wrapper \code{\link{get_hospital_metadata}} or when supplied by the user,
-#' .
 #'
 #' @param hospital_id Integer containing the hospital id, get it through \code{\link{get_hospital_metadata}} under the collumn \code{id}
 #' @param hospital_metadata a "data.frame" or NULL (default). If NULL, the function makes an API call to extract the hospitals metadata

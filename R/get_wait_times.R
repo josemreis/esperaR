@@ -1,13 +1,13 @@
 #' Get wait times for emergencies, consultations, and surgeries in the Hospitals covered by the "tempos" API
 #'
-#' This function provides a wrapper to the API endpoints for getting the live wait times for emergencies, consultations, and surgeries at the following domain: [http://tempos.min-saude.pt]http://tempos.min-saude.pt.
+#' This function provides a wrapper to the API endpoints for getting the live wait times for emergencies, consultations, and surgeries at the following domain: \link{http://tempos.min-saude.pt}.
 #' \code{\link{get_wait_times_all}} runs this function on all existing ids.
 #'
 #' @param hospital_id Integer containing the hospital id, get it through \code{\link{get_hospital_metadata}} under the collumn \code{id}
 #' @param output_format defines the format of the final output resulting form the API call. Two options:
 #' (1) \code{output_format = "data_frame"} returns a tibble object;
 #' (2) \code{output_format = "json"} returns the data as a json file
-#' @param request_headers character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers()}}. Defaults to \code{NULL}
+#' @param request_headers character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}
 #' @param data_type Character string determining the type of data to request. Can be either (1) \code{"emergency"}, (2) \code{"consultation"}, or \code{"surgery"}
 #' @return json string or tibble containing the relevant metadata. The relevant wait times for \code{"emergency"} are in both seconds as integer or \code{\link[lubridate]{ymd_hms}}. For \code{"consultation"} or \code{"surgery"} they unit of analysis is day as integer. All datasets also contain a variable measuring wait times by the number of people waiting.
 #' @export
