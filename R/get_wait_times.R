@@ -11,6 +11,7 @@
 #' @param data_type Character string determining the type of data to request. Can be either (1) \code{"emergency"}, (2) \code{"consultation"}, or \code{"surgery"}
 #' @return json string or tibble containing the relevant metadata. The relevant wait times for \code{"emergency"} are in both seconds as integer or \code{\link[lubridate]{ymd_hms}}. For \code{"consultation"} or \code{"surgery"} they unit of analysis is day as integer. All datasets also contain a variable measuring wait times by the number of people waiting.
 #' @export
+#' @import httr jsonlite magrittr tidyr dplyr purrr lubridate
 #' @examples
 #'library(jsonlite)
 #'library(esperaR)

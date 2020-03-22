@@ -8,6 +8,7 @@
 #' @return Returns a tibble containing three variables: "data_type", character referring to the type of data provided by the endpoint, "availability",
 #' logical values providing information on the data availability in that hospital
 #' @export
+#' @import httr jsonlite magrittr tidyr dplyr purrr lubridate
 #' @examples
 #' my_metadata <- get_hospitals_metadata(output_format = "data_frame", request_headers = "")
 #'

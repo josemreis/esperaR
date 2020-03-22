@@ -12,13 +12,13 @@ get_hospital_metadata(output_format = c("json", "data_frame"),
 (1) \code{output_format = "data_frame"} returns a tibble object;
 (2) \code{output_format = "json"} returns the data as a json file}
 
-\item{request_headers}{character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers()}}. Defaults to \code{NULL}}
+\item{request_headers}{character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}}
 }
 \value{
 json string or tibble containing the relevant metadata.
 }
 \description{
-This function provides a wrapper to the 'api.php/institution' endpoint from the following domain: http://tempos.min-saude.pt.
+This function provides a wrapper to the 'api.php/institution' endpoint from the following domain: \link{http://tempos.min-saude.pt}.
 Crucial for extracting the wait times, see \code{\link{get_wait_times}} has it contains the "hospital id"s as well as logical variables for the data available per website
 }
 \examples{

@@ -19,7 +19,6 @@ logical values providing information on the data availability in that hospital
 }
 \description{
 This function takes a hospital id and returns the data availability in said hospital. Makes use of the hospital metadata, either by resorting to the wrapper \code{\link{get_hospital_metadata}} or when supplied by the user,
-.
 }
 \examples{
 my_metadata <- get_hospitals_metadata(output_format = "data_frame", request_headers = "")

@@ -9,6 +9,7 @@
 #' @param request_headers character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}
 #' @return json string or tibble containing the relevant metadata.
 #' @export
+#' @import httr jsonlite magrittr tidyr dplyr purrr lubridate
 #' @examples
 #'\dontrun{
 #'library(esperaR)

@@ -4,7 +4,9 @@
 \alias{get_wait_times}
 \title{Get wait times for emergencies, consultations, and surgeries in the Hospitals covered by the "tempos" API}
 \usage{
-get_wait_times(...)
+get_wait_times(hospital_id = NULL, output_format = c("json",
+  "data_frame"), request_headers = NULL, data_type = c("emergency",
+  "consultation", "surgery"))
 }
 \arguments{
 \item{hospital_id}{Integer containing the hospital id, get it through \code{\link{get_hospital_metadata}} under the collumn \code{id}}
@@ -13,7 +15,7 @@ get_wait_times(...)
 (1) \code{output_format = "data_frame"} returns a tibble object;
 (2) \code{output_format = "json"} returns the data as a json file}
 
-\item{request_headers}{character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers()}}. Defaults to \code{NULL}}
+\item{request_headers}{character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}}
 
 \item{data_type}{Character string determining the type of data to request. Can be either (1) \code{"emergency"}, (2) \code{"consultation"}, or \code{"surgery"}}
 }
@@ -21,7 +23,7 @@ get_wait_times(...)
 json string or tibble containing the relevant metadata. The relevant wait times for \code{"emergency"} are in both seconds as integer or \code{\link[lubridate]{ymd_hms}}. For \code{"consultation"} or \code{"surgery"} they unit of analysis is day as integer. All datasets also contain a variable measuring wait times by the number of people waiting.
 }
 \description{
-This function provides a wrapper to the API endpoints for getting the live wait times for emergencies, consultations, and surgeries at the following domain: [http://tempos.min-saude.pt]http://tempos.min-saude.pt.
+This function provides a wrapper to the API endpoints for getting the live wait times for emergencies, consultations, and surgeries at the following domain: \link{http://tempos.min-saude.pt}.
 \code{\link{get_wait_times_all}} runs this function on all existing ids.
 }
 \examples{
