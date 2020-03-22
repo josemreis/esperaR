@@ -13,7 +13,7 @@
 #' @export
 #' @importFrom httr RETRY content add_headers handle
 #' @importFrom jsonlite fromJSON flatten
-#' @importFrom dplyr select as_tibble case_when progress_estimated mutate left_join
+#' @importFrom dplyr select as_tibble case_when progress_estimated mutate left_join mutate_all
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer pivot_wider separate
 #' @importFrom lubridate seconds_to_period hour minute ymd_hms

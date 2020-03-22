@@ -11,7 +11,7 @@
 #' @export
 #' @importFrom httr RETRY content add_headers
 #' @importFrom jsonlite fromJSON flatten
-#' @importFrom dplyr select as_tibble mutate
+#' @importFrom dplyr select as_tibble mutate mutate_all
 #' @importFrom magrittr %>%
 #' @examples
 #'\dontrun{

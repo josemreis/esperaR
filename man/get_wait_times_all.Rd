@@ -6,7 +6,7 @@
 \usage{
 get_wait_times_all(output_format = c("json", "data_frame"),
   request_headers = "", data_type = c("emergency", "consultation",
-  "surgery"), sleep_time = 3)
+  "surgery"), sleep_time = 1)
 }
 \arguments{
 \item{output_format}{defines the format of the final output resulting form the API call. Two options:
