@@ -155,20 +155,13 @@ get_wait_times <- function(hospital_id = NULL,
       # Parse dates
       times_parsed <- long_dta %>%
         mutate(sec_p = lubridate::seconds_to_period(wait_time_secs),
-               hours = lubridate::hour(sec_p),
-               minutes = lubridate::minute(sec_p),
-               wait_time = dplyr::case_when(
-                 hours == 0 & minutes == 0  ~ paste0("00:00:", wait_time_secs),
-                 hours == 0 & minutes > 0 ~ paste0("00:", minutes, ":00"),
-                 hours > 0 ~ paste0(hours, ":", minutes, ":00")
-               ),
-               wait_time = lubridate::hms(wait_time)) %>%
-        select(-c(hours, minutes, -sec_p))
+               wait_time_hours = lubridate::hour(sec_p),
+               wait_time_minutes = lubridate::minute(sec_p)) %>%
+        select(-sec_p)
 
       # Add the last updated variable, remove some vars, and turn into final object
       dta_cleaned <- times_parsed %>%
-        mutate(last_update = ymd_hms(LastUpdate),
-               triage_colour = dplyr::case_when(
+        mutate(triage_colour = dplyr::case_when(
                  triage_colour == "Blue" ~ "Not urgent\n(blue)",
                  triage_colour == "Green" ~ "Less urgent\n(green)",
                  triage_colour == "Yellow" ~ "Urgent\n(yellow)",
@@ -177,12 +170,13 @@ get_wait_times <- function(hospital_id = NULL,
                ),
                id = hospital_id) %>%
         select(id,
-               last_update,
+               last_update = LastUpdate,
                emergency_code = Emergency_Code,
                emergency_description = Emergency_Description,
                triage_type = triage_colour,
                wait_time_secs,
-               wait_time,
+               wait_time_minutes,
+               wait_time_hours,
                people_n)
 
     } else if (data_type == "consultation") {
