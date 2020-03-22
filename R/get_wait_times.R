@@ -13,10 +13,10 @@
 #' @export
 #' @importFrom httr RETRY content add_headers handle
 #' @importFrom jsonlite fromJSON flatten
-#' @importFrom dplyr select as_tibble case_when progress_estimated mutate left_join mutate_all
+#' @importFrom dplyr select as_tibble case_when progress_estimated mutate left_join mutate_all any_vars
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer pivot_wider separate
-#' @importFrom lubridate seconds_to_period hour minute ymd_hms
+#' @importFrom lubridate seconds_to_period hour minute ymd_hms dmy
 #' @importFrom purrr map
 #' @examples
 #'library(jsonlite)
@@ -187,10 +187,12 @@ get_wait_times <- function(hospital_id = NULL,
 
     } else if (data_type == "consultation") {
 
-      # just renaming and dropping one var
+      # add last update, renaming and dropping one var
       dta_cleaned <- dta_raw %>%
-        mutate(id = hospital_id) %>%
+        mutate(id = hospital_id,
+               last_update = as.character(jsonlite::fromJSON(content_raw, flatten = TRUE)[[3]])) %>%
         select(id,
+               last_update,
                specialty = Speciality,
                priority = Priority,
                days = Time,
@@ -199,8 +201,10 @@ get_wait_times <- function(hospital_id = NULL,
     } else {
 
       dta_cleaned <- dta_raw %>%
-        mutate(id = hospital_id) %>%
+        mutate(id = hospital_id,
+               last_update = as.character(jsonlite::fromJSON(content_raw, flatten = TRUE)[[3]])) %>%
         select(id,
+               last_update,
                specialty = Speciality,
                priority = Priority,
                days = Time,
