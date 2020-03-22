@@ -16,7 +16,7 @@
 #' @importFrom dplyr select as_tibble case_when progress_estimated mutate left_join mutate_all any_vars
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer pivot_wider separate
-#' @importFrom lubridate seconds_to_period hour minute ymd_hms dmy
+#' @importFrom lubridate seconds_to_period hour minute
 #' @importFrom purrr map
 #' @examples
 #'library(jsonlite)
