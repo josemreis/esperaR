@@ -209,9 +209,12 @@ get_wait_times <- function(hospital_id = NULL,
 
     }
 
-    ### finally, we add the metadata
+    ### finally, we add the metadata, and standardize missing obs to NA
     to_return <- suppressMessages(left_join(dta_cleaned, meta)) %>%
-      as_tibble()
+      as_tibble()  %>%
+      mutate_all(any_vars(ifelse(grepl(pattern = "^N(\\.)?(A|D)(\\.)?$", ignore.case = TRUE, x = .),
+                                 NA_character_,
+                                 .)))
 
   } else {
 
@@ -234,7 +237,7 @@ get_wait_times <- function(hospital_id = NULL,
 #' @export
 #' @importFrom httr RETRY content
 #' @importFrom jsonlite fromJSON flatten
-#' @importFrom dplyr select as_tibble case_when bind_rows progress_estimated
+#' @importFrom dplyr select as_tibble case_when bind_rows progress_estimated mutate mutate_all
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer pivot_wider separate
 #' @importFrom lubridate seconds_to_period hour minute ymd_hms
@@ -312,8 +315,6 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
                               output_format = output_format,
                               request_headers = "",
                               data_type = data_type), silent = TRUE)
-
-    print(ret)
 
     if (class(ret) == "try-error") {
 

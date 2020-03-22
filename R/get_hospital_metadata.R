@@ -104,6 +104,12 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
 
   }
 
+  ## standardize missing obs
+  to_return <- to_return  %>%
+    mutate_all(any_vars(ifelse(grepl(pattern = "^N(\\.)?(A|D)(\\.)?$", ignore.case = TRUE, x = .),
+                               NA_character_,
+                               .)))
+
   # return
   return(to_return)
 }
