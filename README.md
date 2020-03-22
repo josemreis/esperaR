@@ -1,6 +1,6 @@
 # esperaR
 
-An unoficial wraper to the [Tempos Medios de Espera](http://tempos.min-saude.pt/#/instituicoes) API for collecting wait time data aswell as hospital metadata
+An unoficial wrapper to the [Tempos Medios de Espera](http://tempos.min-saude.pt/#/instituicoes) API for collecting wait time data aswell as metadata from Portuguese Hospitals
 
 (work in progress)
 
@@ -17,7 +17,7 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 ## install dev version 
 remotes::install_github("josemreis/esperaR")
 
-## load the package
+## load the package 
 library(esperaR)
 ```
 
