@@ -5,7 +5,7 @@
 \title{Error handling helper functions
 A couple of error handling helper fuctions used in \code{\link{get_hospital_metadata}}, \code{\link{get_wait_times}} and \code{\link{hospital_data_availability}}}
 \usage{
-prep_id(hospital_id = NULL)
+prep_id(hospital_id = NULL, metadata = NULL)
 }
 \description{
 Error handling helper functions

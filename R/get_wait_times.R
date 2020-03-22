@@ -11,7 +11,7 @@
 #' @param data_type Character string determining the type of data to request. Can be either (1) \code{"emergency"}, (2) \code{"consultation"}, or \code{"surgery"}
 #' @return json string or tibble containing the relevant metadata. The relevant wait times for \code{"emergency"} are in both seconds as integer or \code{\link[lubridate]{ymd_hms}}. For \code{"consultation"} or \code{"surgery"} they unit of analysis is day as integer. All datasets also contain a variable measuring wait times by the number of people waiting.
 #' @export
-#' @importFrom httr RETRY content add_headers
+#' @importFrom httr RETRY content add_headers handle
 #' @importFrom jsonlite fromJSON flatten
 #' @importFrom dplyr select as_tibble case_when progress_estimated mutate left_join
 #' @importFrom magrittr %>%
@@ -89,10 +89,14 @@ get_wait_times <- function(hospital_id = NULL,
 
   }
 
+  # start a new handle
+  h <- handle('')
+
   # Send the HTTP GET request
   resp <- httr::RETRY(verb = "GET",
                       url = "http://tempos.min-saude.pt",
                       path = endpoint,
+                      handle = h,
                       config = add_headers(request_headers),
                       pause_base = 20,
                       times = 5)
@@ -308,6 +312,8 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
                               output_format = output_format,
                               request_headers = "",
                               data_type = data_type), silent = TRUE)
+
+    print(ret)
 
     if (class(ret) == "try-error") {
 
