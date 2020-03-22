@@ -15,7 +15,7 @@ get_wait_times(hospital_id = NULL, output_format = c("json",
 (1) \code{output_format = "data_frame"} returns a tibble object;
 (2) \code{output_format = "json"} returns the data as a json file}
 
-\item{request_headers}{character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}}
+\item{request_headers}{named character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}}
 
 \item{data_type}{Character string determining the type of data to request. Can be either (1) \code{"emergency"}, (2) \code{"consultation"}, or \code{"surgery"}}
 }

@@ -8,7 +8,9 @@
 #' @return Returns a tibble containing three variables: "data_type", character referring to the type of data provided by the endpoint, "availability",
 #' logical values providing information on the data availability in that hospital
 #' @export
-#' @import httr jsonlite magrittr tidyr dplyr purrr lubridate
+#' @importFrom dplyr select as_tibble filter contains mutate
+#' @importFrom magrittr %>%
+#' @importFrom tidyr pivot_longer
 #' @examples
 #' my_metadata <- get_hospitals_metadata(output_format = "data_frame", request_headers = "")
 #'
@@ -18,14 +20,11 @@
 #### check_data_availability---------------------------------------------------------------
 hospital_data_availability <- function(hospital_id = NULL, hospital_metadata = NULL){
 
-  ## Prep the hospital_id
-  check_id(hospital_id = hospital_id)
-
-  # coerce to integer
-  hospital_id <- as.integer(hospital_id)
+  ## Prep the hospital_id -> coerces it to integer
+  hospital_id <- prep_id(hospital_id = hospital_id)
 
   # Get the metadata if not passed as argument
-  if (rlang::is_empty(hospital_metadata)) {
+  if (identical(hospital_metadata, NULL)) {
 
     hospital_metadata <- get_hospital_metadata(output_format = "data_frame",
                                                request_headers = "")
@@ -36,10 +35,9 @@ hospital_data_availability <- function(hospital_id = NULL, hospital_metadata = N
   to_return <- hospital_metadata %>%
     filter(id == hospital_id) %>%
     select(contains("shares")) %>%
-    purrr::set_names(.,
-              gsub(pattern = "shares|\\_|dta", replacement = "", x = names(.), fixed = FALSE)) %>%
     tidyr::pivot_longer(cols = c(1:3), names_to = "data_type", values_to = "availability") %>%
-    mutate(id = hospital_id)
+    mutate(id = hospital_id,
+           data_type = gsub(pattern = "shares|\\_|dta", replacement = "", x = data_type))
 
   return(to_return)
 }

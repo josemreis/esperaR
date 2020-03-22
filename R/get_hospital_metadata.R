@@ -6,10 +6,13 @@
 #' @param output_format Character which defines the format of the final output resulting form the API call. Two options:
 #' (1) \code{output_format = "data_frame"} returns a tibble object;
 #' (2) \code{output_format = "json"} returns the data as a json file
-#' @param request_headers character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}
+#' @param request_headers named character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}
 #' @return json string or tibble containing the relevant metadata.
 #' @export
-#' @import httr jsonlite magrittr tidyr dplyr purrr lubridate
+#' @importFrom httr RETRY content add_headers
+#' @importFrom jsonlite fromJSON flatten
+#' @importFrom dplyr select as_tibble mutate
+#' @importFrom magrittr %>%
 #' @examples
 #'\dontrun{
 #'library(esperaR)
@@ -29,7 +32,7 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
 
   ## API call
   # prep headers. Check if NULL, NA or not a named vector
-  if (rlang::is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
+  if (identical(request_headers, NULL) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
 
     request_headers <- ""
 
@@ -44,7 +47,12 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
                 times = 10)
 
   # Check staus server response
-  httr::stop_for_status(resp)
+  if (resp$status_code != "200") {
+
+    error(paste0("Bad response form the server side\nerror code: ", resp$status_code))
+
+  }
+
 
   ## Parse the data
   # check data format
@@ -58,10 +66,7 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
 
     # parse the json
     dta_raw <- try(jsonlite::fromJSON(content_raw, flatten = TRUE) %>%
-                     .[["Result"]] %>%
-                     purrr::set_names(.,
-                                      gsub(pattern = "\\.", replacement = "\\_", x = names(.))),
-                   silent = TRUE)
+                     .[["Result"]], silent = TRUE)
 
     # parse the json to df and clean variable names
     if (class(dta_raw) == "try-error"){
@@ -69,6 +74,9 @@ get_hospital_metadata <- function(output_format = c("json", "data_frame"), reque
       stop(paste0("Something went wrong when parsing the JSON file. Double check its format at: ", resp$url, "\nError message:\n", dta_raw))
 
     }
+
+    ## clean up var names
+    colnames(dta_raw) <- gsub(pattern = "\\.", replacement = "\\_", x = colnames(dta_raw))
 
     ## wrangle
     to_return <- dta_raw %>%

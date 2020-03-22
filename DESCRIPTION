@@ -8,14 +8,13 @@ Description: An unoficial wraper to Portugal's Ministry of Health "tempos" API f
 Depends:
     R (>= 3.5.3)
 Imports:
+    dplyr,
     httr,
     jsonlite,
     magrittr,
-    rlang,
     tidyr,
-    dplyr,
-    purrr,
-    lubridate
+    lubridate,
+    purrr
 License: MIT + file LICENSE
 URL: https://github.com/josemreis/esperaR
 BugReports: https://github.com/josemreis/esperaR/issues

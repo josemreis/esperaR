@@ -12,7 +12,7 @@ get_hospital_metadata(output_format = c("json", "data_frame"),
 (1) \code{output_format = "data_frame"} returns a tibble object;
 (2) \code{output_format = "json"} returns the data as a json file}
 
-\item{request_headers}{character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}}
+\item{request_headers}{named character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}}
 }
 \value{
 json string or tibble containing the relevant metadata.

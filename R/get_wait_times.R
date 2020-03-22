@@ -7,11 +7,17 @@
 #' @param output_format defines the format of the final output resulting form the API call. Two options:
 #' (1) \code{output_format = "data_frame"} returns a tibble object;
 #' (2) \code{output_format = "json"} returns the data as a json file
-#' @param request_headers character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}
+#' @param request_headers named character vector with the HTTP headers to be added to \code{\link[httr]{GET}} via \code{\link[httr]{add_headers}}. Defaults to \code{NULL}
 #' @param data_type Character string determining the type of data to request. Can be either (1) \code{"emergency"}, (2) \code{"consultation"}, or \code{"surgery"}
 #' @return json string or tibble containing the relevant metadata. The relevant wait times for \code{"emergency"} are in both seconds as integer or \code{\link[lubridate]{ymd_hms}}. For \code{"consultation"} or \code{"surgery"} they unit of analysis is day as integer. All datasets also contain a variable measuring wait times by the number of people waiting.
 #' @export
-#' @import httr jsonlite magrittr tidyr dplyr purrr lubridate
+#' @importFrom httr RETRY content add_headers
+#' @importFrom jsonlite fromJSON flatten
+#' @importFrom dplyr select as_tibble case_when progress_estimated mutate left_join
+#' @importFrom magrittr %>%
+#' @importFrom tidyr pivot_longer pivot_wider separate
+#' @importFrom lubridate seconds_to_period hour minute ymd_hms
+#' @importFrom purrr map
 #' @examples
 #'library(jsonlite)
 #'library(esperaR)
@@ -36,16 +42,17 @@ get_wait_times <- function(hospital_id = NULL,
                            request_headers = NULL,
                            data_type = c("emergency", "consultation", "surgery")) {
 
-  ## Prep the hospital_id -> coerces it to integer
-  hospital_id <- prep_id(hospital_id = hospital_id)
 
-  # check data type
-  check_data_type(data_type = tolower(data_type))
-
-  ## Check if the hospital shares data, if not throw an error
   # Get the metadata
   meta <- get_hospital_metadata(output_format = "data_frame")
 
+  ## Prep the hospital_id -> coerces it to integer
+  hospital_id <- prep_id(hospital_id = hospital_id, metadata = meta)
+
+  # prep data type
+  data_type <- prep_data_type(data_type = data_type)
+
+  ## Check if the hospital shares data, if not throw an error
   # get the data available
   available <- hospital_data_availability(hospital_id = hospital_id,
                                           hospital_metadata = meta)
@@ -76,7 +83,7 @@ get_wait_times <- function(hospital_id = NULL,
     paste(., hospital_id, sep = "/")
 
   # prep headers. Check if NULL, NA or not a named vector
-  if (rlang::is_empty(request_headers) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
+  if (identical(request_headers, NULL) || is.na(request_headers) || (is.vector(request_headers, mode = "character") & any(is.na(names(t))))) {
 
     request_headers <- ""
 
@@ -90,7 +97,12 @@ get_wait_times <- function(hospital_id = NULL,
                       pause_base = 20,
                       times = 5)
 
-  httr::stop_for_status(resp)
+  # Check staus server response
+  if (resp$status_code != "200") {
+
+    error(paste0("Bad response form the server side\nerror code: ", resp$status_code))
+
+  }
 
   # check output format
   check_output_format(output_format = output_format)
@@ -103,16 +115,16 @@ get_wait_times <- function(hospital_id = NULL,
 
     # parse the json to df and clean variable names
     dta_raw <- try(jsonlite::fromJSON(content_raw, flatten = TRUE) %>%
-                     .[["Result"]] %>%
-                     purrr::set_names(.,
-                                      gsub(pattern = "\\.", replacement = "\\_", names(.))),
-                   silent = TRUE)
+                     .[["Result"]], silent = TRUE)
     # Test it
     if (class(dta_raw) == "try-error") {
 
       stop(paste0("Something went wrong when parsing the JSON file. Double check its format at: ", resp$url, "\nError message:\n", dta_raw))
 
     }
+
+    ## clean up var names
+    colnames(dta_raw) <- gsub(pattern = "\\.", replacement = "\\_", x = colnames(dta_raw))
 
     ## Wrangle - different wrangling procedure depending on data_type requested
     # logical condition: data type
@@ -207,30 +219,47 @@ get_wait_times <- function(hospital_id = NULL,
   return(to_return)
 }
 
-#### Function for getting all the wait times-------------------------------
+#------------------------------------------------------------------------------------------
+#' Get wait times for emergencies, consultations, and surgeries for all Hospitals covered by the "tempos" API
+#'
+#' This function loops across all hospital IDs and runs \code{\link{get_wait_times}} in order to extract all wait times
+#'
+#' @inheritParams get_wait_times
+#' @param sleep_time Integer defining the number of seconds to wait between API calls. Strongly recomend setting a sleeper time so as to not overloading the server. Defaults to 3 seconds.
+#' @return list with json strings or tibble. The relevant wait times for \code{"emergency"} are in both seconds as integer or \code{\link[lubridate]{ymd_hms}}. For \code{"consultation"} or \code{"surgery"} they unit of analysis is day as integer. All datasets also contain a variable measuring wait times by the number of people waiting.
+#' @export
+#' @importFrom httr RETRY content
+#' @importFrom jsonlite fromJSON flatten
+#' @importFrom dplyr select as_tibble case_when bind_rows progress_estimated
+#' @importFrom magrittr %>%
+#' @importFrom tidyr pivot_longer pivot_wider separate
+#' @importFrom lubridate seconds_to_period hour minute ymd_hms
+#' @importFrom purrr map possibly
+#' @examples
+#'
+#'library(esperaR)
+#'
+#'\dontrun{
+#'library(ggplot2)
+#'## extract emergency data as a data frame
+#'wait_dta <- get_wait_times_all(output_format = "data_frame", data_type = "consultation")
+#'
+#'wait_dta %>%
+#'  group_by(priority) %>%
+#'  summarise(mean_wait_time = mean(as.integer(days), na.rm = TRUE)) %>%
+#'  ungroup() %>%
+#'  top_n(mean_wait_time, 10) %>%
+#'  ggplot(aes(priority, mean_wait_time)) +
+#'  geom_boxplot() +
+#'  coord_flip()
+#'}
+#'
 
 ### get_wait_times_all()
 get_wait_times_all <- function(output_format = c("json", "data_frame"),
                                request_headers = "",
                                data_type = c("emergency", "consultation", "surgery"),
-                               sleep_time = 3) {
-
-  # check data type
-  check_data_type(data_type = tolower(data_type))
-
-  # check output format
-  check_output_format(output_format = output_format)
-
-  ## Check sleep time
-  to_sleep <- prep_sleep_time(sleep_time = sleep_time)
-
-  # be nice
-  if (to_sleep == 0) {
-
-    base::message("\nI have seen you have added no sleep time.\nWhile there are no stated rate limits, this might lead to some server refusals as well as overload the server with requests.\nStrongly recommend adding some sleep_time.\n")
-    Sys.sleep(0.5)
-
-  }
+                               sleep_time = 1) {
 
   ## get all the hospital ids
   if (data_type == "emergency") {
@@ -250,11 +279,28 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
 
   }
 
+  # prep data type
+  data_type <- prep_data_type(data_type = data_type)
+
+  # check output format
+  check_output_format(output_format = output_format)
+
+  ## Check sleep time
+  to_sleep <- prep_sleep_time(sleep_time = sleep_time)
+
+  # be nice
+  if (to_sleep == 0) {
+
+    base::message("\nI have seen you have added no sleep time.\nWhile there are no stated rate limits, this might lead to some server refusals as well as overload the server with requests.\nStrongly recommend adding some sleep_time.\n")
+    Sys.sleep(0.5)
+
+  }
+
   # set up the progress bar
   prog <- dplyr::progress_estimated(n = nrow(hospital_metadata))
 
   ## loop across the hospitals which share data, extract, and join
-  output_list <- purrr::map(hospital_metadata$id, purrr::possibly(function(cur_id) {
+  output_list <- purrr::map(hospital_metadata$id, function(cur_id) {
 
     prog$tick()$print()
 
@@ -263,17 +309,24 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
                               request_headers = "",
                               data_type = data_type), silent = TRUE)
 
+    if (class(ret) == "try-error") {
+
+      warning(paste0("No data retrieved for hospital (id): ", cur_id))
+      ret <- data.frame()
+
+    }
+
     Sys.sleep(to_sleep)
 
     return(ret)
-  }, otherwise = NULL, quiet = FALSE))
+  })
 
   ## final tidying
   if (output_format == "data_frame") {
 
     ## bind cols and turn to tibble
     to_return <- output_list %>%
-      bind_rows() %>%
+      do.call(rbind, .) %>%
       as_tibble()
 
   } else {
