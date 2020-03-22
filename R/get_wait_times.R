@@ -40,7 +40,7 @@ get_wait_times <- function(hospital_id = NULL,
   hospital_id <- prep_id(hospital_id = hospital_id)
 
   # check data type
-  check_data_type(data_type = data_type)
+  check_data_type(data_type = tolower(data_type))
 
   ## Check if the hospital shares data, if not throw an error
   # Get the metadata
@@ -51,14 +51,18 @@ get_wait_times <- function(hospital_id = NULL,
                                           hospital_metadata = meta)
 
   if (available$availability[available$data_type == data_type] == FALSE) {
+
     ## prep the error message
     missing_msg <- paste0("It seems that '", data_type, "' data is not available for this Hospital.\n")
+
     available_msg <- paste("However, the following data is:",
                             paste(available$data_type[available$availability == TRUE], collapse = ", "),
                             "\n")
+
     issue_msg <- "If you have any reason to believe that the requested data exists in the API, please file an issue at\nhttps://github.com/josemreis/esperaR/issues\n"
 
     stop(paste0(missing_msg, available_msg, issue_msg))
+
   }
 
 
@@ -212,7 +216,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
                                sleep_time = 3) {
 
   # check data type
-  check_data_type(data_type = data_type)
+  check_data_type(data_type = tolower(data_type))
 
   # check output format
   check_output_format(output_format = output_format)

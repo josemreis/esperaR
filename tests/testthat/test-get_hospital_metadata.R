@@ -9,6 +9,6 @@ test_that("get_hospital_metadata stops when request headers is not a named chara
 
 test_that("get_hospital_metadata should not stop", {
 
-  expect_output(get_hospital_metadata("data_frame"), "tbl")
+  expect_is(get_hospital_metadata("data_frame"), "tbl")
 
 })
