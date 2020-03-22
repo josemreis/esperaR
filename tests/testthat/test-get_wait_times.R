@@ -55,7 +55,7 @@ test_that("get_wait_times all with sleep_time = 1 ", {
                                sleep_time = 1), "tbl")
 
   expect_is(get_wait_times_all(output_format = "data_frame",
-                               data_type = "surgergy",
+                               data_type = "surgery",
                                sleep_time = 1), "tbl")
 
   expect_is(get_wait_times_all(output_format = "data_frame",

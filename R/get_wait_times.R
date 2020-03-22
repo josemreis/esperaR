@@ -316,7 +316,7 @@ get_wait_times_all <- function(output_format = c("json", "data_frame"),
                               request_headers = "",
                               data_type = data_type), silent = TRUE)
 
-    if (class(ret) == "try-error") {
+    if (any(class(ret) == "try-error")) {
 
       warning(paste0("No data retrieved for hospital (id): ", cur_id))
       ret <- data.frame()
